@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Client, Collection, GatewayIntentBits, Events, Message, TextChannel } from 'discord.js';
 import fs from 'fs';
 import path from 'path';
+import express from 'express';
 import { initializeDatabase, addMessage, getHistory } from './database';
 
 // Initialize the database when the bot starts
@@ -171,6 +172,22 @@ client.on(Events.MessageCreate, async (message: Message) => {
         console.error('Error executing chat command:', error);
         await message.reply({ content: 'Something went wrong while talking to the AI. Please try again later.' });
     }
+});
+
+// Setup Express server for healthcheck
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        discord: client.isReady() ? 'connected' : 'disconnected'
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Healthcheck server running on port ${PORT}`);
 });
 
 client.login(process.env.TOKEN);
